@@ -1,0 +1,130 @@
+.menù{
+background:url("background.png");
+height: 882px;
+display: flex;width:100%;align-items: center;
+background-size:  100% 100%;
+}
+.logo {
+  position: absolute;
+  top: -40px;
+}
+.logo-text {
+  font-size: 4rem; 
+  font-weight: bold;
+  letter-spacing: -7px;
+}
+.logo-black {
+  color: black;
+}
+.logo-green {
+  color: rgb(23, 177, 23); 
+}
+input.one{
+   border-radius: 15px;
+  background-color: rgb(23, 177, 23);
+    color: azure;
+    border: none;
+    font-size: 20px;
+    padding: 6px 12px;
+    cursor: pointer;
+    position: relative;
+    left: 20%;
+}
+input.two{
+  border-radius: 10px;
+ background-color: rgb(23, 177, 23);
+   color: azure;
+   border: none;
+   font-size: 20px;
+   padding: 6px 12px;
+   cursor: pointer;
+   position: fixed;
+   left: 70%;
+}
+input.signup{
+  border-radius: 10px;
+  background-color: rgb(23, 177, 23);
+    color: azure;
+    border: none;
+    font-size: 20px;
+    padding: 6px 12px;
+    cursor: pointer;
+    position: absolute;
+    left: 90%;
+    top: 30px; 
+}
+input.signup:hover{
+  background-color: green;
+}
+input.one:hover{
+  background-color: green;
+}
+input.two:hover{
+  background-color: green;
+}
+.bisogno-container{
+  text-align: left;
+  position: absolute;
+  padding: 25px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  top: 90px;
+  left: 37%;
+  border-radius: 8px;
+}
+input.invia{
+  background-color: rgb(23, 177, 23);
+  color: azure;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  right: 70;
+  position: absolute;
+  border-radius: 3px;
+}
+input.invia:hover{
+  background-color: green;
+}
+#risultato{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 50px;
+  position: fixed;
+  left: 15%;
+  right: 15%;;
+}
+.lavoro-container{
+  background-color: rgb(255, 255, 255);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+  border: 2px none;
+  padding: 25px;
+  border-radius: 8px;
+  align-items: center;
+  }
+  .lavoro-container:hover{
+  background-color: rgb(250, 250, 250);
+  cursor:pointer;
+  border: 2px solid rgb(23, 177, 23);
+  
+  }
+  .ricompensa{
+    color: rgb(23, 177, 23);
+    font-size: medium;
+    margin-bottom: 10px;
+  }
+  .lavoro-container input[type="button"] {
+    background-color: rgb(23, 177, 23);
+    color: white;
+    border: none;
+    padding: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+   font-size: 1rem;
+   margin-bottom: 10px;
+   margin-left: 180px;
+  
+  }
+  textarea{
+    resize: none;
+  }

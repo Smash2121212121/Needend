@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <title>Minilavoro</title>
+</head>
+<body onload="datistampati()">
+    <p id="risultato"></p>
+    <link rel="stylesheet" href="style.css">
+<script>
+      function datistampati(){
+    var dati = JSON.parse(localStorage.getItem("dati")) || [];
+    var risultatoHTML = "";
+    for (var i = 0; i < dati.length; i++) {
+        risultatoHTML += '<div class="lavoro-container">';
+            risultatoHTML += '<h3>Bisogno: ' + dati[i].Bisogno + '</h3>';
+            risultatoHTML += '<div class="ricompensa">Ricompensa: ' + dati[i].Ricompensa + '€</div>';
+            risultatoHTML += '<div class="durata">Durata: ' + dati[i].Durata + '</div>';
+            risultatoHTML += '<div>Descrizione: ' + dati[i].Descrizione + '</div>';
+            risultatoHTML += '<div><input type="button" value="Accetta" onclick="accettaLavoro(' + i + ')"></div>';
+            risultatoHTML += '</div>';
+           }
+    document.getElementById("risultato").innerHTML = risultatoHTML;
+}
+function accettaLavoro(index){
+    alert("hai accettato il lavoro");
+    var dati = JSON.parse(localStorage.getItem("dati")) || [];
+    dati.splice(index, 1);
+    localStorage.setItem("dati", JSON.stringify(dati));
+    datistampati();
+}
+</script>
+</body>
+</html>

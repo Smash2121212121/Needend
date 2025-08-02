@@ -1,0 +1,44 @@
+<html lang="en">
+<head>
+</head>
+<body>
+  <link rel="stylesheet" href="style.css">
+<div class="bisogno-container">
+  <form onsubmit="Stampadati(event)">
+<label for="Bisogno">Bisogno</label>
+<input type="text" id="Bisogno"  required>
+<br><br/>
+<label for="Ricompensa">Ricompensa</label>
+<input type="number" id="Ricompensa" min="5" max="50" required>
+<br><br/>
+<label for="Ore">Durata: Ore</label>
+<input type="number" id="Ore" min="0" max="24" value="0">
+<label for="Minuti"> Minuti</label>
+<input type="number" id="Minuti" min="0" max="59" value="15"><br><br/>
+<p><label for="Descrizione">Descrizione</label></p>
+<textarea id="Descrizione" rows="4" cols="50"placeholder="scrivi descrizione bisogno..." ></textarea><br><br/>
+<input type="submit" value="invia" class="invia" >
+</div>
+  </form>  
+  <script>
+  function Stampadati(event){
+    event.preventDefault();
+var bisogno = document.getElementById("Bisogno").value
+var ricompensa = document.getElementById("Ricompensa").value;
+var ore = document.getElementById("Ore").value;
+var minuti = document.getElementById("Minuti").value;
+var durata = ore + " ore " + minuti + " minuti";
+var descrizione = document.getElementById("Descrizione").value;
+var dati = JSON.parse(localStorage.getItem("dati")) || [];
+dati.push({ Bisogno: bisogno, Ricompensa: ricompensa,Durata: durata,Descrizione: descrizione});
+localStorage.setItem("dati", JSON.stringify(dati))
+document.getElementById("Bisogno").value = '';
+document.getElementById("Ricompensa").value = '';
+document.getElementById("Ore").value = '0';
+document.getElementById("Minuti").value = '15';
+document.getElementById("Descrizione").value ='';
+window.location.href = "Minilavoro.html";
+  }
+  </script>
+</body>
+</html>
