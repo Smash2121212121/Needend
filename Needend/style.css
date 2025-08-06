@@ -84,6 +84,14 @@ input.invia{
 input.invia:hover{
   background-color: green;
 }
+.Mini{
+  color: black;
+  font-size: 50px;
+}
+.work{
+  color: rgb(23, 177, 23);
+  font-size: 50px;
+}
 #risultato{
   display: grid;
   grid-template-columns: repeat(3, minmax(280px, 1fr));
