@@ -1,57 +1,64 @@
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-import { getFirestore, collection, query, orderBy, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Minilavoro</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <span class="Mini">Mini</span><span class="work">lavori</span>
+  <div id="risultato"></div>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAZB8-vpCBKH-cG8VOrn0CWgCL6k4hR_HM",
-  authDomain: "needend-538ab.firebaseapp.com",
-  projectId: "needend-538ab",
-  storageBucket: "needend-538ab.firebasestorage.app",
-  messagingSenderId: "18978302731",
-  appId: "1:18978302731:web:d2543654b74953382f500e",
-  measurementId: "G-1M35078DYX"
-};
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+    const firebaseConfig = {
+      apiKey: "AIzaSyAZB8-vpCBKH-cG8VOrn0CWgCL6k4hR_HM",
+      authDomain: "needend-538ab.firebaseapp.com",
+      projectId: "needend-538ab",
+      storageBucket: "needend-538ab.firebasestorage.app",
+      messagingSenderId: "18978302731",
+      appId: "1:18978302731:web:d2543654b74953382f500e",
+      measurementId: "G-1M35078DYX"
+    };
 
-const container = document.getElementById("risultato");
-const q = query(collection(db, "bisogni"), orderBy("timestamp", "desc"));
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-// Funzione per eliminare un documento
-async function eliminaDocumento(docID) {
-  try {
-    await deleteDoc(doc(db, "bisogni", docID));
-    console.log("Documento eliminato:", docID);
-  } catch (err) {
-    console.error("Errore eliminazione:", err);
-  }
-}
+    const container = document.getElementById("risultato");
 
-// Stampa bisogni + aggiunge tasto accetta
-onSnapshot(q, (snapshot) => {
-  container.innerHTML = "";
-  snapshot.forEach((docSnap) => {
-    const data = docSnap.data();
+    const q = query(collection(db, "bisogni"), orderBy("timestamp", "desc"));
 
-    // CREA elemento HTML
-    const div = document.createElement("div");
-    div.className = "lavoro-container";
-    div.innerHTML = `
-      <h3>Bisogno: ${data.bisogno}</h3>
-      <div class="ricompensa">Ricompensa: ${data.ricompensa}€</div>
-      <div class="durata">Durata: ${data.durata}</div>
-      <div>Descrizione: ${data.descrizione}</div>
-      <button data-id="${docSnap.id}">Accetta</button>
-    `;
+    onSnapshot(q, (snapshot) => {
+      container.innerHTML = "";
+      snapshot.forEach((doc) => {
+        const data = doc.data();
 
-    // CLICK elimina
-    div.querySelector("button").addEventListener("click", (e) => {
-      alert("Hai accettato il lavoro");
-      eliminaDocumento(e.target.dataset.id);
-    });
+        const div = document.createElement("div");
+        div.className = "lavoro-container";
 
-    container.appendChild(div);
-  });
-});
-</script>
+        div.innerHTML = `
+          <h3>Bisogno: ${data.bisogno}</h3>
+          <div class="ricompensa">Ricompensa: ${data.ricompensa}€</div>
+          <div class="durata">Durata: ${data.durata}</div>
+          <div>Descrizione: ${data.descrizione}</div>
+          <div><input type="button" value="Accetta" data-id="${doc.id}"></div>
+        `;
+
+        div.querySelector("input").addEventListener("click", async () => {
+          alert("Hai accettato il lavoro");
+          try {
+            await deleteDoc(doc(db, "bisogni", doc.id));
+            console.log("Lavoro rimosso");
+          } catch (error) {
+            console.error("Errore nella rimozione:", error);
+          }
+        });
+
+        container.appendChild(div);
+      });
+       });
+  </script>
+</body>
+</html>
