@@ -170,3 +170,33 @@ body {
 .login-link-text a:hover {
   text-decoration: underline;
 }
+
+/* Adattamento smartphone aggiunto senza modificare gli stili esistenti */
+@media screen and (max-width: 480px) {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  .signup-container {
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .signup-box {
+    width: 100%;
+    max-width: 100%;
+    padding: 1.4rem;
+  }
+
+  .form-input,
+  .submit-button,
+  .google-button {
+    width: 100%;
+  }
+
+  .logo-text {
+    font-size: 2rem;
+  }
+}
