@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Bisogno</title>
   <link rel="stylesheet" href="style.css">
+  <script src="localita.js"></script>
 </head>
 <body>
   <div class="bisogno-container">
@@ -19,12 +20,49 @@
       <label for="Minuti"> Minuti</label>
       <input type="number" id="Minuti" min="0" max="59" value="15"><br><br/>
 
+      <label for="Provincia">Provincia</label>
+      <select id="Provincia" required>
+        <option value="">Seleziona una provincia</option>
+      </select><br><br/>
+
+      <label for="Comune">Comune</label>
+      <select id="Comune" required disabled>
+        <option value="">Prima seleziona una provincia</option>
+      </select><br><br/>
+
       <p><label for="Descrizione">Descrizione</label></p>
       <textarea id="Descrizione" rows="4" cols="50" placeholder="scrivi descrizione bisogno..."></textarea><br><br/>
 
       <input type="submit" value="invia" class="invia">
     </form>
   </div>
+
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const provinciaSelect = document.getElementById("Provincia");
+      const comuneSelect = document.getElementById("Comune");
+
+      Object.keys(window.LOCALITA_ITALIA || {}).forEach(function (provincia) {
+        const option = document.createElement("option");
+        option.value = provincia;
+        option.textContent = provincia;
+        provinciaSelect.appendChild(option);
+      });
+
+      provinciaSelect.addEventListener("change", function () {
+        comuneSelect.innerHTML = '<option value="">Seleziona un comune</option>';
+        const comuni = (window.LOCALITA_ITALIA || {})[provinciaSelect.value] || [];
+        comuni.forEach(function (comune) {
+          const option = document.createElement("option");
+          option.value = comune;
+          option.textContent = comune;
+          comuneSelect.appendChild(option);
+        });
+        comuneSelect.disabled = comuni.length === 0;
+      });
+    });
+  </script>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
@@ -52,6 +90,8 @@
       const minuti = document.getElementById("Minuti").value;
       const durata = ore + " ore " + minuti + " minuti";
       const descrizione = document.getElementById("Descrizione").value;
+      const provincia = document.getElementById("Provincia").value;
+      const comune = document.getElementById("Comune").value;
 
       try {
         await addDoc(collection(db, "bisogni"), {
@@ -59,6 +99,8 @@
           ricompensa,
           durata,
           descrizione,
+          provincia,
+          comune,
           timestamp: Date.now()
         });
 
@@ -68,6 +110,9 @@
         document.getElementById("Ore").value = '0';
         document.getElementById("Minuti").value = '15';
         document.getElementById("Descrizione").value = '';
+        document.getElementById("Provincia").value = '';
+        document.getElementById("Comune").innerHTML = '<option value="">Prima seleziona una provincia</option>';
+        document.getElementById("Comune").disabled = true;
 
         // Reindirizza
         window.location.href = "Minilavoro.html";

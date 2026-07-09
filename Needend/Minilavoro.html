@@ -4,10 +4,61 @@
   <meta charset="UTF-8">
   <title>Minilavoro</title>
   <link rel="stylesheet" href="style.css">
+  <script src="localita.js"></script>
 </head>
 <body>
   <span class="Mini">Mini</span><span class="work">lavori</span>
+  <div id="filtro-localita">
+    <label for="FiltroProvincia">Provincia</label>
+    <select id="FiltroProvincia">
+      <option value="">Tutte le province</option>
+    </select>
+    <label for="FiltroComune">Comune</label>
+    <select id="FiltroComune" disabled>
+      <option value="">Tutti i comuni</option>
+    </select>
+  </div>
   <div id="risultato"></div>
+
+
+  <script>
+    function applicaFiltroLocalita() {
+      const provincia = document.getElementById("FiltroProvincia").value;
+      const comune = document.getElementById("FiltroComune").value;
+      document.querySelectorAll(".lavoro-container").forEach(function (scheda) {
+        const provinciaCorretta = !provincia || scheda.dataset.provincia === provincia;
+        const comuneCorretto = !comune || scheda.dataset.comune === comune;
+        scheda.style.display = provinciaCorretta && comuneCorretto ? "" : "none";
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const provinciaSelect = document.getElementById("FiltroProvincia");
+      const comuneSelect = document.getElementById("FiltroComune");
+
+      Object.keys(window.LOCALITA_ITALIA || {}).forEach(function (provincia) {
+        const option = document.createElement("option");
+        option.value = provincia;
+        option.textContent = provincia;
+        provinciaSelect.appendChild(option);
+      });
+
+      provinciaSelect.addEventListener("change", function () {
+        comuneSelect.innerHTML = '<option value="">Tutti i comuni</option>';
+        const comuni = (window.LOCALITA_ITALIA || {})[provinciaSelect.value] || [];
+        comuni.forEach(function (comune) {
+          const option = document.createElement("option");
+          option.value = comune;
+          option.textContent = comune;
+          comuneSelect.appendChild(option);
+        });
+        comuneSelect.disabled = comuni.length === 0;
+        applicaFiltroLocalita();
+      });
+
+      comuneSelect.addEventListener("change", applicaFiltroLocalita);
+    });
+  </script>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
@@ -37,11 +88,14 @@
 
         const div = document.createElement("div");
         div.className = "lavoro-container";
+        div.dataset.provincia = data.provincia || "";
+        div.dataset.comune = data.comune || "";
 
         div.innerHTML = `
           <h3>Bisogno: ${data.bisogno}</h3>
           <div class="ricompensa">Ricompensa: ${data.ricompensa}€</div>
           <div class="durata">Durata: ${data.durata}</div>
+          <div>Località: ${data.comune && data.provincia ? data.comune + " (" + data.provincia + ")" : "Non specificata"}</div>
           <div>Descrizione: ${data.descrizione}</div>
           <div><input type="button" value="Accetta" data-id="${doc.id}"></div>
         `;
@@ -57,6 +111,7 @@
         });
 
         container.appendChild(div);
+        applicaFiltroLocalita();
       });
        });
   </script>
