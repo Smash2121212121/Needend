@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Minilavoro</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="localita.js"></script>
+</head>
+<body>
+  <span class="Mini">Mini</span><span class="work">lavori</span>
+  <input type="button" class="chatlink" value="Le mie chat" onclick="window.location.href='Chat.html'">
+  <div id="filtro-localita">
+    <label for="FiltroProvincia">Provincia</label>
+    <select id="FiltroProvincia">
+      <option value="">Tutte le province</option>
+    </select>
+    <label for="FiltroComune">Comune</label>
+    <select id="FiltroComune" disabled>
+      <option value="">Tutti i comuni</option>
+    </select>
+  </div>
+  <div id="risultato"></div>
+
+
+  <script>
+    function applicaFiltroLocalita() {
+      const provincia = document.getElementById("FiltroProvincia").value;
+      const comune = document.getElementById("FiltroComune").value;
+      document.querySelectorAll(".lavoro-container").forEach(function (scheda) {
+        const provinciaCorretta = !provincia || scheda.dataset.provincia === provincia;
+        const comuneCorretto = !comune || scheda.dataset.comune === comune;
+        scheda.style.display = provinciaCorretta && comuneCorretto ? "" : "none";
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const provinciaSelect = document.getElementById("FiltroProvincia");
+      const comuneSelect = document.getElementById("FiltroComune");
+
+      Object.keys(window.LOCALITA_ITALIA || {}).forEach(function (provincia) {
+        const option = document.createElement("option");
+        option.value = provincia;
+        option.textContent = provincia;
+        provinciaSelect.appendChild(option);
+      });
+
+      provinciaSelect.addEventListener("change", function () {
+        comuneSelect.innerHTML = '<option value="">Tutti i comuni</option>';
+        const comuni = (window.LOCALITA_ITALIA || {})[provinciaSelect.value] || [];
+        comuni.forEach(function (comune) {
+          const option = document.createElement("option");
+          option.value = comune;
+          option.textContent = comune;
+          comuneSelect.appendChild(option);
+        });
+        comuneSelect.disabled = comuni.length === 0;
+        applicaFiltroLocalita();
+      });
+
+      comuneSelect.addEventListener("change", applicaFiltroLocalita);
+    });
+  </script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc as firestoreDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAZB8-vpCBKH-cG8VOrn0CWgCL6k4hR_HM",
+      authDomain: "needend-538ab.firebaseapp.com",
+      projectId: "needend-538ab",
+      storageBucket: "needend-538ab.firebasestorage.app",
+      messagingSenderId: "18978302731",
+      appId: "1:18978302731:web:d2543654b74953382f500e",
+      measurementId: "G-1M35078DYX"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    let utenteCorrente = null;
+
+    onAuthStateChanged(auth, (user) => {
+      utenteCorrente = user;
+    });
+
+    const container = document.getElementById("risultato");
+
+    const q = query(collection(db, "bisogni"), orderBy("timestamp", "desc"));
+
+    onSnapshot(q, (snapshot) => {
+      container.innerHTML = "";
+      let annunciVisibili = 0;
+      snapshot.forEach((documento) => {
+        const data = documento.data();
+
+        // Nasconde gli annunci vecchi/test creati prima del sistema account-chat.
+        // I nuovi annunci hanno creatorId perché vengono pubblicati da un utente loggato.
+        if (!data.creatorId) {
+          return;
+        }
+
+        annunciVisibili++;
+
+        const div = document.createElement("div");
+        div.className = "lavoro-container";
+        div.dataset.provincia = data.provincia || "";
+        div.dataset.comune = data.comune || "";
+
+        div.innerHTML = `
+          <h3>Bisogno: ${data.bisogno}</h3>
+          <div class="ricompensa">Ricompensa: ${data.ricompensa}€</div>
+          <div class="durata">Durata: ${data.durata}</div>
+          <div>Località: ${data.comune && data.provincia ? data.comune + " (" + data.provincia + ")" : "Non specificata"}</div>
+          <div>Descrizione: ${data.descrizione}</div>
+          <div><input type="button" value="Accetta" data-id="${documento.id}"></div>
+        `;
+
+        div.querySelector("input").addEventListener("click", async () => {
+          if (!auth.currentUser) {
+            alert("Per accettare un mini lavoro devi prima creare un account o accedere.");
+            window.location.href = "Signup.html";
+            return;
+          }
+
+          if (data.creatorId && data.creatorId === auth.currentUser.uid) {
+            alert("Non puoi accettare un annuncio pubblicato da te.");
+            return;
+          }
+
+          try {
+            const partecipanti = [auth.currentUser.uid];
+            if (data.creatorId) {
+              partecipanti.push(data.creatorId);
+            }
+
+            const chatRef = await addDoc(collection(db, "chats"), {
+              annuncioId: documento.id,
+              bisogno: data.bisogno || "",
+              ricompensa: data.ricompensa || "",
+              durata: data.durata || "",
+              descrizione: data.descrizione || "",
+              provincia: data.provincia || "",
+              comune: data.comune || "",
+              creatorId: data.creatorId || "",
+              creatorEmail: data.creatorEmail || "",
+              workerId: auth.currentUser.uid,
+              workerEmail: auth.currentUser.email,
+              partecipanti,
+              createdAt: Date.now(),
+              updatedAt: Date.now()
+            });
+
+            await deleteDoc(firestoreDoc(db, "bisogni", documento.id));
+            alert("Hai accettato il lavoro. L'annuncio è stato rimosso e si apre la chat.");
+            window.location.href = "Chat.html?id=" + chatRef.id;
+          } catch (error) {
+            console.error("Errore nell'accettazione:", error);
+            alert("Errore: " + error.message);
+          }
+        });
+
+        container.appendChild(div);
+        applicaFiltroLocalita();
+      });
+
+      if (annunciVisibili === 0) {
+        container.innerHTML = "<p>Nessun mini lavoro disponibile al momento.</p>";
+      }
+       });
+  </script>
+</body>
+</html>

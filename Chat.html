@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Needend</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="chat-body">
+  <div class="chat-page">
+    <div class="chat-header">
+      <h1><span class="logo-black">Need</span><span class="logo-green">end</span></h1>
+      <div>
+        <input type="button" value="Mini lavori" onclick="window.location.href='Minilavoro.html'">
+        <input type="button" value="Esci" onclick="logout()">
+      </div>
+    </div>
+
+    <div id="chat-list-box" class="chat-box">
+      <h2>Le mie chat</h2>
+      <div id="lista-chat">Caricamento...</div>
+    </div>
+
+    <div id="chat-messaggi-box" class="chat-box" style="display:none;">
+      <h2 id="chat-title">Chat</h2>
+      <p id="chat-info"></p>
+      <div id="messaggi"></div>
+      <form id="form-messaggio" onsubmit="inviaMessaggio(event)">
+        <input type="text" id="testo-messaggio" placeholder="Scrivi un messaggio..." required>
+        <input type="submit" value="Invia">
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, orderBy, onSnapshot, doc, getDoc, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAZB8-vpCBKH-cG8VOrn0CWgCL6k4hR_HM",
+      authDomain: "needend-538ab.firebaseapp.com",
+      projectId: "needend-538ab",
+      storageBucket: "needend-538ab.firebasestorage.app",
+      messagingSenderId: "18978302731",
+      appId: "1:18978302731:web:d2543654b74953382f500e",
+      measurementId: "G-1M35078DYX"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    let utenteCorrente = null;
+    let chatId = new URLSearchParams(window.location.search).get("id");
+
+    window.logout = function () {
+      signOut(auth).then(() => window.location.href = "Signup.html");
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        alert("Devi accedere per vedere le chat.");
+        window.location.href = "Signup.html";
+        return;
+      }
+      utenteCorrente = user;
+
+      if (chatId) {
+        apriChat(chatId);
+      } else {
+        caricaListaChat();
+      }
+    });
+
+    function caricaListaChat() {
+      document.getElementById("chat-list-box").style.display = "block";
+      document.getElementById("chat-messaggi-box").style.display = "none";
+      const lista = document.getElementById("lista-chat");
+      const q = query(collection(db, "chats"), where("partecipanti", "array-contains", utenteCorrente.uid));
+
+      onSnapshot(q, (snapshot) => {
+        lista.innerHTML = "";
+        if (snapshot.empty) {
+          lista.innerHTML = "<p>Non hai ancora chat attive.</p>";
+          return;
+        }
+
+        snapshot.forEach((documento) => {
+          const data = documento.data();
+          const div = document.createElement("div");
+          div.className = "chat-preview";
+          div.innerHTML = `
+            <strong>${data.bisogno || "Mini lavoro"}</strong><br>
+            <span>${data.comune && data.provincia ? data.comune + " (" + data.provincia + ")" : "Località non specificata"}</span><br>
+            <small>Ricompensa: ${data.ricompensa || ""}€</small>
+          `;
+          div.addEventListener("click", () => {
+            window.location.href = "Chat.html?id=" + documento.id;
+          });
+          lista.appendChild(div);
+        });
+      });
+    }
+
+    async function apriChat(id) {
+      document.getElementById("chat-list-box").style.display = "none";
+      document.getElementById("chat-messaggi-box").style.display = "block";
+      const chatSnap = await getDoc(doc(db, "chats", id));
+      if (!chatSnap.exists()) {
+        document.getElementById("chat-title").innerText = "Chat non trovata";
+        return;
+      }
+      const chat = chatSnap.data();
+      document.getElementById("chat-title").innerText = chat.bisogno || "Chat";
+      document.getElementById("chat-info").innerText = `${chat.comune && chat.provincia ? chat.comune + " (" + chat.provincia + ")" : "Località non specificata"} · Ricompensa: ${chat.ricompensa || ""}€`;
+
+      const messaggiBox = document.getElementById("messaggi");
+      const q = query(collection(db, "chats", id, "messaggi"), orderBy("timestamp", "asc"));
+
+      onSnapshot(q, (snapshot) => {
+        messaggiBox.innerHTML = "";
+        snapshot.forEach((documento) => {
+          const msg = documento.data();
+          const div = document.createElement("div");
+          div.className = msg.uid === utenteCorrente.uid ? "messaggio mio" : "messaggio altro";
+          div.innerHTML = `<small>${msg.email || "Utente"}</small><br>${msg.testo}`;
+          messaggiBox.appendChild(div);
+        });
+        messaggiBox.scrollTop = messaggiBox.scrollHeight;
+      });
+    }
+
+    window.inviaMessaggio = async function (event) {
+      event.preventDefault();
+      const input = document.getElementById("testo-messaggio");
+      const testo = input.value.trim();
+      if (!testo || !chatId || !utenteCorrente) return;
+
+      await addDoc(collection(db, "chats", chatId, "messaggi"), {
+        testo,
+        uid: utenteCorrente.uid,
+        email: utenteCorrente.email,
+        timestamp: Date.now()
+      });
+
+      await updateDoc(doc(db, "chats", chatId), {
+        updatedAt: Date.now(),
+        ultimoMessaggio: testo
+      });
+
+      input.value = "";
+    };
+  </script>
+</body>
+</html>

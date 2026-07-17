@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Bisogno</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="localita.js"></script>
+</head>
+<body>
+  <div class="bisogno-container">
+    <form onsubmit="Stampadati(event)">
+      <label for="Bisogno">Bisogno</label>
+      <input type="text" id="Bisogno" required><br><br/>
+
+      <label for="Ricompensa">Ricompensa</label>
+      <input type="number" id="Ricompensa" min="5" max="50" required><br><br/>
+
+      <label for="Ore">Durata: Ore</label>
+      <input type="number" id="Ore" min="0" max="24" value="0">
+      <label for="Minuti"> Minuti</label>
+      <input type="number" id="Minuti" min="0" max="59" value="15"><br><br/>
+
+      <label for="Provincia">Provincia</label>
+      <select id="Provincia" required>
+        <option value="">Seleziona una provincia</option>
+      </select><br><br/>
+
+      <label for="Comune">Comune</label>
+      <select id="Comune" required disabled>
+        <option value="">Prima seleziona una provincia</option>
+      </select><br><br/>
+
+      <p><label for="Descrizione">Descrizione</label></p>
+      <textarea id="Descrizione" rows="4" cols="50" placeholder="scrivi descrizione bisogno..."></textarea><br><br/>
+
+      <input type="submit" value="invia" class="invia">
+    </form>
+  </div>
+
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const provinciaSelect = document.getElementById("Provincia");
+      const comuneSelect = document.getElementById("Comune");
+
+      Object.keys(window.LOCALITA_ITALIA || {}).forEach(function (provincia) {
+        const option = document.createElement("option");
+        option.value = provincia;
+        option.textContent = provincia;
+        provinciaSelect.appendChild(option);
+      });
+
+      provinciaSelect.addEventListener("change", function () {
+        comuneSelect.innerHTML = '<option value="">Seleziona un comune</option>';
+        const comuni = (window.LOCALITA_ITALIA || {})[provinciaSelect.value] || [];
+        comuni.forEach(function (comune) {
+          const option = document.createElement("option");
+          option.value = comune;
+          option.textContent = comune;
+          comuneSelect.appendChild(option);
+        });
+        comuneSelect.disabled = comuni.length === 0;
+      });
+    });
+  </script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAZB8-vpCBKH-cG8VOrn0CWgCL6k4hR_HM",
+      authDomain: "needend-538ab.firebaseapp.com",
+      projectId: "needend-538ab",
+      storageBucket: "needend-538ab.firebasestorage.app",
+      messagingSenderId: "18978302731",
+      appId: "1:18978302731:web:d2543654b74953382f500e",
+      measurementId: "G-1M35078DYX"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    let utenteCorrente = null;
+
+    onAuthStateChanged(auth, (user) => {
+      utenteCorrente = user;
+    });
+
+    window.Stampadati = async function(event) {
+      event.preventDefault();
+
+      if (!auth.currentUser) {
+        alert("Per pubblicare un bisogno devi prima creare un account o accedere.");
+        window.location.href = "Signup.html";
+        return;
+      }
+
+      const bisogno = document.getElementById("Bisogno").value;
+      const ricompensa = document.getElementById("Ricompensa").value;
+      const ore = document.getElementById("Ore").value;
+      const minuti = document.getElementById("Minuti").value;
+      const durata = ore + " ore " + minuti + " minuti";
+      const descrizione = document.getElementById("Descrizione").value;
+      const provincia = document.getElementById("Provincia").value;
+      const comune = document.getElementById("Comune").value;
+
+      try {
+        await addDoc(collection(db, "bisogni"), {
+          bisogno,
+          ricompensa,
+          durata,
+          descrizione,
+          provincia,
+          comune,
+          creatorId: auth.currentUser.uid,
+          creatorEmail: auth.currentUser.email,
+          timestamp: Date.now()
+        });
+
+        // Pulisce il form
+        document.getElementById("Bisogno").value = '';
+        document.getElementById("Ricompensa").value = '';
+        document.getElementById("Ore").value = '0';
+        document.getElementById("Minuti").value = '15';
+        document.getElementById("Descrizione").value = '';
+        document.getElementById("Provincia").value = '';
+        document.getElementById("Comune").innerHTML = '<option value="">Prima seleziona una provincia</option>';
+        document.getElementById("Comune").disabled = true;
+
+        // Reindirizza
+        window.location.href = "Minilavoro.html";
+
+      } catch (error) {
+        alert("Errore nel salvataggio: " + error.message);
+      }
+    };
+  </script>
+</body>
+</html>
+
