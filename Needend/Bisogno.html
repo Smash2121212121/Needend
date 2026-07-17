@@ -21,6 +21,12 @@
       <label for="Minuti"> Minuti</label>
       <input type="number" id="Minuti" min="0" max="59" value="15"><br><br/>
 
+      <label for="Giorno">Data</label>
+      <input type="date" id="Giorno" required><br><br/>
+
+      <label for="Orario">Orario</label>
+      <input type="time" id="Orario" required><br><br/>
+
       <label for="Provincia">Provincia</label>
       <select id="Provincia" required>
         <option value="">Seleziona una provincia</option>
@@ -68,6 +74,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAZB8-vpCBKH-cG8VOrn0CWgCL6k4hR_HM",
@@ -81,15 +88,30 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
+    let utenteCorrente = null;
+
+    onAuthStateChanged(auth, (user) => {
+      utenteCorrente = user;
+    });
 
     window.Stampadati = async function(event) {
       event.preventDefault();
+
+      if (!auth.currentUser) {
+        alert("Per pubblicare un bisogno devi prima creare un account o accedere.");
+        window.location.href = "Signup.html";
+        return;
+      }
 
       const bisogno = document.getElementById("Bisogno").value;
       const ricompensa = document.getElementById("Ricompensa").value;
       const ore = document.getElementById("Ore").value;
       const minuti = document.getElementById("Minuti").value;
       const durata = ore + " ore " + minuti + " minuti";
+      const giornoInput = document.getElementById("Giorno").value;
+      const giorno = giornoInput ? giornoInput.split("-").reverse().slice(0, 2).join("/") : "";
+      const orario = document.getElementById("Orario").value;
       const descrizione = document.getElementById("Descrizione").value;
       const provincia = document.getElementById("Provincia").value;
       const comune = document.getElementById("Comune").value;
@@ -99,9 +121,13 @@
           bisogno,
           ricompensa,
           durata,
+          giorno,
+          orario,
           descrizione,
           provincia,
           comune,
+          creatorId: auth.currentUser.uid,
+          creatorEmail: auth.currentUser.email,
           timestamp: Date.now()
         });
 
@@ -110,6 +136,8 @@
         document.getElementById("Ricompensa").value = '';
         document.getElementById("Ore").value = '0';
         document.getElementById("Minuti").value = '15';
+        document.getElementById("Giorno").value = '';
+        document.getElementById("Orario").value = '';
         document.getElementById("Descrizione").value = '';
         document.getElementById("Provincia").value = '';
         document.getElementById("Comune").innerHTML = '<option value="">Prima seleziona una provincia</option>';

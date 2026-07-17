@@ -13,35 +13,35 @@
     <main class="signup-container">
         <div class="signup-box">
             <div class="logo">
-                <a href="#" class="logo-link">
+                <a href="index.html" class="logo-link">
                     <h1 class="logo-text">
                         <span class="logo-black">Need</span><span class="logo-green">end</span>
                     </h1>
                 </a>
             </div>
 
-            <h2 class="title">Crea un account</h2>
-            <p class="subtitle">Inserisci la tua email qui sotto per creare il tuo account</p>
+            <h2 class="title" id="auth-title">Crea un account</h2>
+            <p class="subtitle" id="auth-subtitle">Inserisci la tua email qui sotto per creare il tuo account</p>
 
-            <form>
+            <form onsubmit="gestisciAccesso(event)">
                 <div class="form-group">
                     <label for="email" class="form-label">Email</label>
-                    <input type="email" id="email" class="form-input" placeholder="nome@esempio.com">
+                    <input type="email" id="email" class="form-input" placeholder="nome@esempio.com" required>
                 </div>
                 <div class="form-group">
                     <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" class="form-input" placeholder="••••••••">
+                    <input type="password" id="password" class="form-input" placeholder="••••••••" required minlength="6">
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="confirm-password-group">
                     <label for="confirm-password" class="form-label">Conferma Password</label>
-                    <input type="password" id="confirm-password" class="form-input" placeholder="••••••••">
+                    <input type="password" id="confirm-password" class="form-input" placeholder="••••••••" minlength="6">
                 </div>
-                <button type="submit" class="submit-button">Crea Account</button>
+                <button type="submit" class="submit-button" id="auth-button">Crea Account</button>
             </form>
 
             <div class="separator">oppure continua con</div>
 
-            <button class="google-button">
+            <button class="google-button" onclick="googleSignup()">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
                     <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path>
                     <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path>
@@ -51,8 +51,10 @@
                 Continua con Google
             </button>
 
+            <p id="message" style="text-align:center; font-size:0.875rem; margin-top:1rem;"></p>
+
             <p class="login-link-text">
-                Hai già un account? <a href="#">Accedi</a>
+                <span id="toggle-text">Hai già un account?</span> <a href="#" onclick="cambiaModalita(event)" id="toggle-link">Accedi</a>
             </p>
         </div>
     </main>
@@ -68,33 +70,67 @@
   };
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
-  function signup() {
-    const email = document.getElementById("signup-email").value;
-    const password = document.getElementById("signup-password").value;
-  
-    auth.createUserWithEmailAndPassword(email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        document.getElementById("message").innerText = `Registrazione riuscita: ${user.email}`;
+  let modalitaAccesso = false;
+
+  function mostraMessaggio(testo, errore = false) {
+    const message = document.getElementById("message");
+    message.innerText = testo;
+    message.style.color = errore ? "red" : "#16a34a";
+  }
+
+  function cambiaModalita(event) {
+    event.preventDefault();
+    modalitaAccesso = !modalitaAccesso;
+    document.getElementById("auth-title").innerText = modalitaAccesso ? "Accedi" : "Crea un account";
+    document.getElementById("auth-subtitle").innerText = modalitaAccesso ? "Inserisci email e password per accedere" : "Inserisci la tua email qui sotto per creare il tuo account";
+    document.getElementById("auth-button").innerText = modalitaAccesso ? "Accedi" : "Crea Account";
+    document.getElementById("confirm-password-group").style.display = modalitaAccesso ? "none" : "block";
+    document.getElementById("toggle-text").innerText = modalitaAccesso ? "Non hai un account?" : "Hai già un account?";
+    document.getElementById("toggle-link").innerText = modalitaAccesso ? "Registrati" : "Accedi";
+    mostraMessaggio("");
+  }
+
+  function gestisciAccesso(event) {
+    event.preventDefault();
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const conferma = document.getElementById("confirm-password").value;
+
+    if (!modalitaAccesso && password !== conferma) {
+      mostraMessaggio("Le password non coincidono.", true);
+      return;
+    }
+
+    const operazione = modalitaAccesso
+      ? auth.signInWithEmailAndPassword(email, password)
+      : auth.createUserWithEmailAndPassword(email, password);
+
+    operazione
+      .then(() => {
+        mostraMessaggio(modalitaAccesso ? "Accesso riuscito." : "Registrazione riuscita.");
+        setTimeout(() => { window.location.href = "Minilavoro.html"; }, 700);
       })
       .catch((error) => {
-        document.getElementById("message").innerText = `Errore: ${error.message}`;
+        mostraMessaggio("Errore: " + error.message, true);
       });
   }
+
   function googleSignup() {
+    if (window.location.protocol === "file:") {
+      mostraMessaggio("Google non funziona aprendo il sito da una cartella del PC. Pubblica su Netlify oppure avvialo con http://localhost per provarlo.", true);
+      return;
+    }
+
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider)
-      .then((result) => {
-        const user = result.user;
-        document.getElementById("message").innerText = `Registrato con Google: ${user.displayName}`;
+      .then(() => {
+        mostraMessaggio("Accesso con Google riuscito.");
+        setTimeout(() => { window.location.href = "Minilavoro.html"; }, 700);
       })
       .catch((error) => {
-        document.getElementById("message").innerText = `Errore Google: ${error.message}`;
+        mostraMessaggio("Errore Google: " + error.message, true);
       });
   }
   </script>
 </body>
 </html>
-
- 
-
